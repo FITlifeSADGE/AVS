@@ -1,0 +1,3 @@
+/mnt/c/Users/lukas/projects/school_projects/1mit/AVS/Proj1/CMakeFiles/mandelbrot.dir
+/mnt/c/Users/lukas/projects/school_projects/1mit/AVS/Proj1/CMakeFiles/edit_cache.dir
+/mnt/c/Users/lukas/projects/school_projects/1mit/AVS/Proj1/CMakeFiles/rebuild_cache.dir
