@@ -48,54 +48,46 @@ LineMandelCalculator::~LineMandelCalculator()
 int *LineMandelCalculator::calculateMandelbrot()
 {
 	// @TODO implement Mandelbrot calculation using SIMD
-	int *pdata = data;
 	float *preal = real;
 	float *pimag = imag;
 
+	int *pdata_tmp = new int[width * height]();
+	int counter = 0;
+
 	float r2;
 	float i2;
-	int counter = 0;
 
 	float x;
 	float y;
 
-	for (int i = 0; i < height * width; i++) {
-		pdata[i] = limit;
-	}
+	std::fill(pdata_tmp, pdata_tmp + width * height, limit);
+
     for (int i = 0; i < height/2; i++)
     {
 		int index = i * width;
 		int mirror_index = (height - i - 1) * width;
 		y = (float) y_start + i * (float) dy; // current imaginary value
 		counter = 0;
-        for (int k = 0; ((k < limit) && (counter < width)); ++k)
+        for (int k = 0; (k < limit) && (counter < width); ++k)
         {
 			#pragma omp simd
 			for (int j = 0; j < width; j++) {
 				x = (float) x_start + j * (float) dx; // current real value
 				
-				if (k == 0) {
+				if (!k) {
 					preal[j] = x;
 					pimag[j] = y;
 				}
 
 				r2 = preal[j] * preal[j];
 				i2 = pimag[j] * pimag[j];
-				//#pragma omp simd reduction(+:counter)
-				//if ((r2 + i2 > 4.0f) && ((*(pdata + j)) == limit)) {
-					//(*(pdata + j)) = k;
-				if ((r2 + i2 > 4.0f) && (pdata[j + index] == limit)) {
-					pdata[j + index] = k;
-					pdata[mirror_index + j] = k;
-					counter++;
-				}
-				else {
-					pimag[j] = 2.0f * preal[j] * pimag[j] + y;
-					preal[j] = r2 - i2 + x;
-				}
+
+				((r2 + i2 > 4.0f) && (pdata_tmp[j + index] == limit)) ? (pdata_tmp[j + index] = k), (pdata_tmp[mirror_index + j] = k), counter++ : 0;
+
+				pimag[j] = 2.0f * preal[j] * pimag[j] + y;
+				preal[j] = r2 - i2 + x;
 			}
         }
-		//pdata += width;
     }
-    return data;
+    return pdata_tmp;
 }
