@@ -1,6 +1,6 @@
 /**
  * @file BatchMandelCalculator.h
- * @author FULL NAME <xlogin00@stud.fit.vutbr.cz>
+ * @author Lukáš Kaprál <xkapra00@stud.fit.vutbr.cz>
  * @brief Implementation of Mandelbrot calculator that uses SIMD paralelization over small batches
  * @date DATE
  */
@@ -18,11 +18,8 @@ public:
 
 private:
     // @TODO add all internal parameters
-    int *data;
     float *real;
     float *imag;
-    float *pre_real;
-    float *pre_imag;
 };
 
 #endif

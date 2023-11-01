@@ -17,11 +17,6 @@
 LineMandelCalculator::LineMandelCalculator(unsigned matrixBaseSize, unsigned limit) : BaseMandelCalculator(matrixBaseSize, limit, "LineMandelCalculator")
 {
 	// @TODO allocate & prefill memory
-	data = (int *)_mm_malloc(height * width * sizeof(int), 32);
-	if (data == nullptr) {
-		std::cerr << "Error: Failed to allocate memory for data" << std::endl;
-		exit(1);
-	}
 	real = (float *)_mm_malloc(width * 2 * sizeof(float), 64);
 	if (real == nullptr) {
 		std::cerr << "Error: Failed to allocate memory for real" << std::endl;
@@ -37,8 +32,6 @@ LineMandelCalculator::LineMandelCalculator(unsigned matrixBaseSize, unsigned lim
 LineMandelCalculator::~LineMandelCalculator()
 {
 	// @TODO cleanup the memory
-	_mm_free(data);
-	data = NULL;
 	_mm_free(real);
 	real = NULL;
 	_mm_free(imag);
