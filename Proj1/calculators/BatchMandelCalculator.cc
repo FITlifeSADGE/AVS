@@ -18,28 +18,20 @@
 
 #include "BatchMandelCalculator.h"
 
+#define blockSize 96
+
 BatchMandelCalculator::BatchMandelCalculator (unsigned matrixBaseSize, unsigned limit) :
 	BaseMandelCalculator(matrixBaseSize, limit, "BatchMandelCalculator")
 {
 	// @TODO allocate & prefill memory
-	real = (float *)_mm_malloc(width * 2 * sizeof(float), 64);
-	if (real == nullptr) {
-		std::cerr << "Error: Failed to allocate memory for data" << std::endl;
-		exit(1);
-	}
-	imag = (float *)_mm_malloc(height * 2 * sizeof(float), 64);
-	if (imag == nullptr) {
-		std::cerr << "Error: Failed to allocate memory for data" << std::endl;
-		exit(1);
-	}
+	real = (float *)aligned_alloc(64, width * 2 * sizeof(float));
+	imag = (float *)aligned_alloc(64, height * 2 * sizeof(float));
 }
 
 BatchMandelCalculator::~BatchMandelCalculator() {
 	// @TODO cleanup the memory
-	_mm_free(real);
-	real = NULL;
-	_mm_free(imag);
-	imag = NULL;
+	free(real);
+	free(imag);
 }
 
 
@@ -48,48 +40,54 @@ int * BatchMandelCalculator::calculateMandelbrot () {
 	float *pimag = imag;
 
 	int *pdata_tmp = new int[width * height]();
-	int counter = 0;
 
-	float r2;
-	float i2;
+	int *tmp_arr = tmp;
 
 	float x[width];
-	float y;
+	int counter = blockSize;
 
-
-	size_t blockSize = 96;
+	//size_t blockSize = 64;
 
 	std::fill(pdata_tmp, pdata_tmp + width * height, limit);
 
 	for (int i = 0; i < width; i++) {
 		x[i] = x_start + i * dx;
 	}
-
-	for (int i = 0; i < (height / 2); i++) {
-		counter = 0;
-		int index = i * width;
-		int mirror_index = (height - i - 1) * width;
-		y = (float) y_start + i * (float) dy; // current imaginary value
-		for (int k = 0; (k < limit) && (counter < width); ++k) {
-			for (size_t j = 0; j < width/blockSize; j++) {
+	for (int i = 0; i < height / 2; i++) {
+		counter = blockSize;
+		size_t index = i * width;
+		size_t mirror_index = (height - i - 1) * width;
+		const float y = (float) y_start + i * (float) dy; // current imaginary value
+		counter = blockSize;
+		for (int j = 0; j < width/blockSize; j++) {
+			counter = blockSize;
+			for (int k = 0; k < limit; ++k) {
+				if (!counter) {
+					break;
+				}
+				counter = blockSize;
 				#pragma omp simd
-				for (int block = 0; block < blockSize; block++) {
+				for (size_t block = 0; block < blockSize; block++) {
 					const size_t jGlobal = j * blockSize + block;
 					if (!k) {
 						preal[jGlobal] = x[jGlobal];
 						pimag[jGlobal] = y;
 					}
-					r2 = preal[jGlobal] * preal[jGlobal];
-					i2 = pimag[jGlobal] * pimag[jGlobal];
+					float r2 = preal[jGlobal] * preal[jGlobal];
+					float i2 = pimag[jGlobal] * pimag[jGlobal];
 
-					((r2 + i2 > 4.0f) && (pdata_tmp[jGlobal + index] == limit)) ? (pdata_tmp[jGlobal + index] = k), (pdata_tmp[mirror_index + jGlobal] = k), counter++ : 0;
+					int komar = r2 + i2 > 4.0f;
+					pdata_tmp[jGlobal + index] = komar ? k : pdata_tmp[jGlobal + index];
+					pdata_tmp[jGlobal + mirror_index] = komar ? k : pdata_tmp[jGlobal + mirror_index];
+
+					counter -= komar;
 
 					pimag[jGlobal] = 2.0f * preal[jGlobal] * pimag[jGlobal] + y;
 					preal[jGlobal] = r2 - i2 + x[jGlobal];
 				}
-
 			}
-		}
+		}	
 	}
     return pdata_tmp;
 }
+

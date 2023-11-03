@@ -20,6 +20,13 @@ private:
     // @TODO add all internal parameters
     float *real;
     float *imag;
+    int *tmp;
+
+    // float *base_r;
+    // float *work_r;
+    // float *work_i;
+    // int *batch_results;
+    // int *results;
 };
 
 #endif
